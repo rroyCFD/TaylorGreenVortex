@@ -34,6 +34,53 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+void::Foam::TaylorGreenVortex2D::setPropertiesOutput()
+{
+    // create output file
+    fileName outputDir;
+    autoPtr<fileName> outFilePath_;
+
+    if(Pstream::parRun() && Pstream::master())
+    {
+        outputDir = runTime_.path()/"../postProcessing";
+
+        outFilePath_.reset( new fileName
+        (
+            runTime_.path()/"../postProcessing"/
+            ("TaylorGreenVortexProperties.dat_"+runTime_.timeName())
+        )
+        );
+
+    }
+    else
+    {
+        outputDir = runTime_.path()/"postProcessing";
+
+        outFilePath_.reset( new fileName
+        (
+            runTime_.path()/"postProcessing"/
+            ("TaylorGreenVortexProperties.dat_"+runTime_.timeName())
+        )
+        );
+    }
+
+    if (!isDir(outputDir))
+    {
+        mkDir(outputDir);
+    }
+
+    globalPropertiesFile_.reset(new OFstream(*outFilePath_));
+
+    // write header of the log file
+    globalPropertiesFile_()
+        << "time" << tab << "Ek" << tab << "epsilon" << endl;
+
+    globalPropertiesFile_().precision(8); // set precision
+
+    Info << "TGV2D: Global properties are written in\n"
+        << globalPropertiesFile_().name() << endl;
+}
+
 void Foam::TaylorGreenVortex2D::calcGlobalProperties()
 {
     tmp<volScalarField> nuEff
@@ -58,6 +105,17 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
 
     // Kinetic energy weighted average
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
+
+
+    // write to log file
+    if(Pstream::master())
+    {
+        globalPropertiesFile_()
+            << runTime_.value()/tc_.value() << tab
+            << Ek_.value() << tab << epsilon_.value()  << tab
+
+            << endl;
+    }
 }
 
 
@@ -88,6 +146,8 @@ void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 
     pa_ = sqr(Uinit_)/4 * (cos(2.*x_c/L_) + cos(2.*y_c/L_));
 }
+
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -170,36 +230,13 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 
     Ek_ ("Ek", dimless, 0.0)
 
+
+
 {
     Info << "TaylorGreenVortex2D constructor" << endl;
 
 
-    // create output file
-    autoPtr<fileName> outFilePtr_;
-    if(Pstream::parRun() && Pstream::master())
-    {
-        outFilePtr_.reset( new fileName
-        (
-            runTime_.path()/"../"/
-            ("TaylorGreenVortexProperties.dat_"+runTime_.timeName())
-        )
-        );
-
-    }
-    else
-    {
-        outFilePtr_.reset( new fileName
-        (
-            runTime_.path()/
-            ("TaylorGreenVortexProperties.dat_"+runTime_.timeName())
-        )
-        );
-    }
-
-    fileName outFilePath = *outFilePtr_;
-
-    OFstream globalPropertiesFile_(outFilePath);
-
+    setPropertiesOutput();
 
 }
 

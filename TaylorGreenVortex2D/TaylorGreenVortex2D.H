@@ -38,6 +38,8 @@ SourceFiles
 #include "fvCFD.H"
 #include "IOdictionary.H"
 #include "turbulenceModel.H"
+#include "OFstream.H"
+#include "vector.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -80,6 +82,9 @@ class TaylorGreenVortex2D
         dimensionedScalar tc_;       // characteristic time scale
         dimensionedScalar epsilon_;  // dissipation rate
         dimensionedScalar Ek_;       // kinetic energy
+
+        //- Output file pointer
+        autoPtr<OFstream> globalPropertiesFile_;
 
     // Private member functions
 
@@ -134,6 +139,8 @@ public:
         );
 
         void setInitialFieldsAsAnalytical();
+
+        void setPropertiesOutput();
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
