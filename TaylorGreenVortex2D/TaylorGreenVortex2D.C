@@ -173,7 +173,24 @@ void::Foam::TaylorGreenVortex2D::calcError()
 
     // Pressure error norms
     Info << "Calculating perror" << endl;
-    perror_ = pa_*Foam::exp(-4.0*nu_().value()*runTime_.value()) - p_;
+    if(pRefOn_)
+    {
+        tmp<volScalarField> pAna_ =
+            pa_*Foam::exp(-4.0*nu_().value()*runTime_.value());
+
+        dimensionedScalar pRefValAna(
+            "", p_.dimensions(), getRefCellValue(pAna_.ref(), pRefCell_));
+        dimensionedScalar pRefValSim(
+            "", p_.dimensions(), getRefCellValue(p_, pRefCell_));
+
+        perror_ = pAna_.ref() - p_; //  - pRefValAna + pRefValSim
+
+        pAna_.clear();
+    }
+    else
+    {
+        perror_ = pa_*Foam::exp(-4.0*nu_().value()*runTime_.value()) - p_;
+    }
 
     pLinfErr_.value() = gMax(mag(perror_)()); // infinity norm
     pL2err_ = sqrt(magSqr(perror_)().weightedAverage(mesh_.V()));  // 2nd norm
@@ -202,7 +219,8 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 (
     const volVectorField& U,
     const surfaceScalarField& phi,
-    const volScalarField& p
+    const volScalarField& p,
+    const label& pRefCell
 )
 :
     // Set the pointer to runTime
@@ -215,6 +233,8 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
     U_(U),
     phi_(phi),
     p_(p),
+    pRefCell_(pRefCell),
+    pRefOn_(p.needReference()),
 
     Ua_
     (

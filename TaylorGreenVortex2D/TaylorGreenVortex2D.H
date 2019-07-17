@@ -71,6 +71,10 @@ class TaylorGreenVortex2D
         // pressure field p pointer
         const volScalarField& p_;
 
+        const label& pRefCell_;
+
+        const bool pRefOn_;
+
         // analytical velocity, flux and pressure field
         volVectorField Ua_;
         surfaceScalarField phia_;
@@ -112,7 +116,8 @@ public:
     (
         const volVectorField& U,
         const surfaceScalarField& phi,
-        const volScalarField& p
+        const volScalarField& p,
+        const label& pRefCell
     );
 
     // Destructor
