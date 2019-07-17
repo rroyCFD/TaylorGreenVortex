@@ -53,14 +53,19 @@ void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
     tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
     tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
 
-    Ua_ =  Uinit_*( vector(1,0,0) * sin(x_c/L_) * cos(y_c/L_)
-                  - vector(0,1,0) * cos(x_c/L_) * sin(y_c/L_)
+    Ua_ =  Uinit_*( vector(1,0,0) * sin(x_c.ref()/L_) * cos(y_c.ref()/L_)
+                  - vector(0,1,0) * cos(x_c.ref()/L_) * sin(y_c.ref()/L_)
                   + vector(0,0,1) * scalar(0.));
 
     phia_ = fvc::interpolate(Ua_)& mesh_.Sf();
 
-    pa_ = sqr(Uinit_)/4 * (cos(2.*x_c/L_) + cos(2.*y_c/L_));
+    pa_ = sqr(Uinit_)/4 * (cos(2.*x_c.ref()/L_) + cos(2.*y_c.ref()/L_));
+
+    x_c.clear();
+    y_c.clear();
+    z_c.clear();
 }
+
 
 void::Foam::TaylorGreenVortex2D::setPropertiesOutput()
 {
@@ -145,6 +150,8 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
               + fvc::div(nuEff.ref()*dev(T(fvc::grad(U_))))
             )
         );
+
+    nuEff.clear();
 
     // dissipation rate weighted average
     epsilon_ = dissipation.weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
@@ -316,7 +323,7 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
     const dictionary& transportProperties_ =
              mesh_.lookupObject<dictionary>("transportProperties");
 
-    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_)); //.lookup("nu")
+    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 
     // calculate error fields and error norms
     calcError();
@@ -334,6 +341,5 @@ Foam::TaylorGreenVortex2D::~TaylorGreenVortex2D()
 {
     Info << "TaylorGreenVortex2D Destructor" << endl;
 }
-
 
 // ************************************************************************* //
