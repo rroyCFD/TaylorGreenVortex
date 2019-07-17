@@ -76,12 +76,25 @@ class TaylorGreenVortex2D
         surfaceScalarField phia_;
         volScalarField pa_;
 
+        // error fields and error norms
+        volVectorField Uerror_;
+        volScalarField perror_;
+
+        dimensionedScalar ULinfErr_;
+        dimensionedScalar UL2err_;
+
+        dimensionedScalar pLinfErr_;
+        dimensionedScalar pL2err_;
+
+        // Case characteristic properties
         IOdictionary TGV2DProperties_;
         dimensionedScalar Uinit_;    // initial Velocity
         dimensionedScalar L_;        //  characteristic length scale
         dimensionedScalar tc_;       // characteristic time scale
         dimensionedScalar epsilon_;  // dissipation rate
         dimensionedScalar Ek_;       // kinetic energy
+
+        autoPtr<dimensionedScalar> nu_;
 
         //- Output file pointer
         autoPtr<OFstream> globalPropertiesFile_;
@@ -141,6 +154,10 @@ public:
         void setInitialFieldsAsAnalytical();
 
         void setPropertiesOutput();
+
+        void calcError();
+
+        void write();
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

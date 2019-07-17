@@ -34,6 +34,34 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+void::Foam::TaylorGreenVortex2D::setInitialFields
+(
+    volVectorField UIn,
+    surfaceScalarField phiIn,
+    volScalarField pIn
+)
+{
+    Ua_ = UIn;
+    phia_ = phiIn;
+    pa_ = pIn;
+}
+
+
+void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
+{
+    tmp<volScalarField> x_c = mesh_.C().component(vector::X);
+    tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
+    tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
+
+    Ua_ =  Uinit_*( vector(1,0,0) * sin(x_c/L_) * cos(y_c/L_)
+                  - vector(0,1,0) * cos(x_c/L_) * sin(y_c/L_)
+                  + vector(0,0,1) * scalar(0.));
+
+    phia_ = fvc::interpolate(Ua_)& mesh_.Sf();
+
+    pa_ = sqr(Uinit_)/4 * (cos(2.*x_c/L_) + cos(2.*y_c/L_));
+}
+
 void::Foam::TaylorGreenVortex2D::setPropertiesOutput()
 {
     // create output file
@@ -73,16 +101,35 @@ void::Foam::TaylorGreenVortex2D::setPropertiesOutput()
 
     // write header of the log file
     globalPropertiesFile_()
-        << "time" << tab << "Ek" << tab << "epsilon" << endl;
+        << "time"      << tab
+        << "Ek(t)"     << tab << "epsilon(t)" << tab
+        << "L2(U,t)"   << tab << "L2(p,t)"    << tab
+        << "Linf(U,t)" << tab << "Linf(p,t)"
+        << endl;
 
     globalPropertiesFile_().precision(8); // set precision
 
     Info << "TGV2D: Global properties are written in\n"
-        << globalPropertiesFile_().name() << endl;
+         << globalPropertiesFile_().name() << endl;
 }
+
 
 void Foam::TaylorGreenVortex2D::calcGlobalProperties()
 {
+
+    Info << "Calculating kinetic energy and dissipation rate" << endl;
+
+    // Assuming laminar 2D Taylor-Green case
+    // volScalarField dissipation =
+    //     (U_ &
+    //         (
+    //             fvc::laplacian(nu_, U_)
+    //           + fvc::div(nu_*dev(T(fvc::grad(U_))))
+    //         )
+    //     );
+
+
+    // Generic turbulence model case
     tmp<volScalarField> nuEff
     (
         mesh_.lookupObject<turbulenceModel>
@@ -91,12 +138,11 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
         ).nuEff()
     );
 
-
     volScalarField dissipation =
         (U_ &
             (
-                fvc::laplacian(nuEff, U_)
-              + fvc::div(nuEff*dev(T(fvc::grad(U_))))
+                fvc::laplacian(nuEff.ref(), U_)
+              + fvc::div(nuEff.ref()*dev(T(fvc::grad(U_))))
             )
         );
 
@@ -105,48 +151,42 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
 
     // Kinetic energy weighted average
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
+}
 
 
-    // write to log file
+void::Foam::TaylorGreenVortex2D::calcError()
+{
+    // Velocity error norms
+    Info << "Calculating Uerror" << endl;
+    Uerror_ = Ua_*Foam::exp(-2.0*nu_().value()*runTime_.value()) - U_;
+
+    ULinfErr_.value() = gMax(mag(Uerror_)());   // infinity norm
+    UL2err_ = sqrt(magSqr(Uerror_)().weightedAverage(mesh_.V())); // 2nd norm
+
+
+    // Pressure error norms
+    Info << "Calculating perror" << endl;
+    perror_ = pa_*Foam::exp(-4.0*nu_().value()*runTime_.value()) - p_;
+
+    pLinfErr_.value() = gMax(mag(perror_)()); // infinity norm
+    pL2err_ = sqrt(magSqr(perror_)().weightedAverage(mesh_.V()));  // 2nd norm
+
+}
+
+
+void::Foam::TaylorGreenVortex2D::write()
+{
+    Info << "writing to log file" << endl;
     if(Pstream::master())
     {
         globalPropertiesFile_()
             << runTime_.value()/tc_.value() << tab
-            << Ek_.value() << tab << epsilon_.value()  << tab
-
+            << Ek_.value()       << tab << epsilon_.value() << tab
+            << UL2err_.value()   << tab << pL2err_.value()  << tab
+            << ULinfErr_.value() << tab << pLinfErr_.value()
             << endl;
     }
 }
-
-
-void::Foam::TaylorGreenVortex2D::setInitialFields
-(
-    volVectorField UIn,
-    surfaceScalarField phiIn,
-    volScalarField pIn
-)
-{
-    Ua_ = UIn;
-    phia_ = phiIn;
-    pa_ = pIn;
-}
-
-
-void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
-{
-    tmp<volScalarField> x_c = mesh_.C().component(vector::X);
-    tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
-    tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
-
-    Ua_ =  Uinit_*( vector(1,0,0) * sin(x_c/L_) * cos(y_c/L_)
-                  - vector(0,1,0) * cos(x_c/L_) * sin(y_c/L_)
-                  + vector(0,0,1) * scalar(0.));
-
-    phia_ = fvc::interpolate(Ua_)& mesh_.Sf();
-
-    pa_ = sqr(Uinit_)/4 * (cos(2.*x_c/L_) + cos(2.*y_c/L_));
-}
-
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -208,6 +248,39 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
         p_
     ),
 
+    Uerror_
+    (
+        IOobject
+        (
+            "Uerror",
+            runTime_.timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        (Ua_ - U_)
+    ),
+
+    perror_
+    (
+        IOobject
+        (
+            "perror",
+            runTime_.timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        (pa_ - p_)
+    ),
+
+    ULinfErr_(max(mag(Uerror_))),
+    UL2err_(sqrt(sum(magSqr(Uerror_)))),
+
+    pLinfErr_(max(mag(perror_))),
+    pL2err_(sqrt(sum(magSqr(perror_)))),
+
+
     TGV2DProperties_
     (
         IOobject
@@ -235,9 +308,24 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 {
     Info << "TaylorGreenVortex2D constructor" << endl;
 
-
+    // Set global properties output file
     setPropertiesOutput();
+    //Info << "Output precision: " << globalPropertiesFile_().precision() << endl;
 
+    // Get molucular viscosity
+    const dictionary& transportProperties_ =
+             mesh_.lookupObject<dictionary>("transportProperties");
+
+    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_)); //.lookup("nu")
+
+    // calculate error fields and error norms
+    calcError();
+
+    // calculate Global Ek and epsilon values
+    calcGlobalProperties();
+
+    // write to log files
+    write();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
