@@ -213,6 +213,32 @@ void Foam::TaylorGreenVortex2D::write()
 }
 
 
+void Foam::TaylorGreenVortex2D::setup()
+{
+    Info << "TaylorGreenVortex2D object setup:" << endl;
+
+    // Set global properties output file
+    setPropertiesOutput();
+
+    // Get molucular viscosity
+    const dictionary& transportProperties_ =
+        mesh_.lookupObject<dictionary>("transportProperties");
+
+    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
+
+    // calculate error fields and error norms
+    calcError();
+
+    // calculate Global Ek and epsilon values
+    calcGlobalProperties();
+
+    // write to log files
+    write();
+
+    Info << endl;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
@@ -333,25 +359,25 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 
 
 {
-    Info << "TaylorGreenVortex2D constructor" << endl;
+    // Info << "TaylorGreenVortex2D constructor" << endl;
 
-    // Set global properties output file
-    setPropertiesOutput();
+    // // Set global properties output file
+    // setPropertiesOutput();
 
-    // Get molucular viscosity
-    const dictionary& transportProperties_ =
-        mesh_.lookupObject<dictionary>("transportProperties");
+    // // Get molucular viscosity
+    // const dictionary& transportProperties_ =
+    //     mesh_.lookupObject<dictionary>("transportProperties");
 
-    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
+    // nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 
-    // calculate error fields and error norms
-    calcError();
+    // // calculate error fields and error norms
+    // calcError();
 
-    // calculate Global Ek and epsilon values
-    calcGlobalProperties();
+    // // calculate Global Ek and epsilon values
+    // calcGlobalProperties();
 
-    // write to log files
-    write();
+    // // write to log files
+    // write();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

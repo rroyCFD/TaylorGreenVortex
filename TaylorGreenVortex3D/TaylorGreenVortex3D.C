@@ -158,6 +158,28 @@ void Foam::TaylorGreenVortex3D::write()
 }
 
 
+void Foam::TaylorGreenVortex3D::setup()
+{
+    Info << "TaylorGreenVortex3D object setup:" << endl;
+
+    // Set global properties output file
+    setPropertiesOutput();
+
+    // Get molucular viscosity
+    const dictionary& transportProperties_ =
+        mesh_.lookupObject<dictionary>("transportProperties");
+
+    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
+
+    // calculate Global Ek and epsilon values
+    calcGlobalProperties();
+
+    // write to log files
+    write();
+
+    Info << endl;
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
@@ -201,22 +223,22 @@ Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
     Ek_ ("Ek", dimless, 0.0)
 
 {
-    Info << "TaylorGreenVortex3D constructor" << endl;
+    // Info << "TaylorGreenVortex3D constructor" << endl;
 
-    // Set global properties output file
-    setPropertiesOutput();
+    // // Set global properties output file
+    // setPropertiesOutput();
 
-    // Get molucular viscosity
-    const dictionary& transportProperties_ =
-        mesh_.lookupObject<dictionary>("transportProperties");
+    // // Get molucular viscosity
+    // const dictionary& transportProperties_ =
+    //     mesh_.lookupObject<dictionary>("transportProperties");
 
-    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
+    // nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 
-    // calculate Global Ek and epsilon values
-    calcGlobalProperties();
+    // // calculate Global Ek and epsilon values
+    // calcGlobalProperties();
 
-    // write to log files
-    write();
+    // // write to log files
+    // write();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

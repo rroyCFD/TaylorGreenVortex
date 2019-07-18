@@ -149,6 +149,9 @@ public:
             return Ek_;
         }
 
+        // call-up the initial member functions in case of parent class
+        void setup();
+
         void setInitialFields(
             volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
         );
