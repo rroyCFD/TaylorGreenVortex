@@ -34,7 +34,7 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-void::Foam::TaylorGreenVortex2D::setInitialFields
+void Foam::TaylorGreenVortex2D::setInitialFields
 (
     volVectorField UIn,
     surfaceScalarField phiIn,
@@ -47,7 +47,7 @@ void::Foam::TaylorGreenVortex2D::setInitialFields
 }
 
 
-void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
+void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 {
     tmp<volScalarField> x_c = mesh_.C().component(vector::X);
     tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
@@ -67,7 +67,7 @@ void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 }
 
 
-void::Foam::TaylorGreenVortex2D::setPropertiesOutput()
+void Foam::TaylorGreenVortex2D::setPropertiesOutput()
 {
     // create output file
     fileName outputDir;
@@ -161,7 +161,7 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
 }
 
 
-void::Foam::TaylorGreenVortex2D::calcError()
+void Foam::TaylorGreenVortex2D::calcError()
 {
     // Velocity error norms
     Info << "Calculating Uerror" << endl;
@@ -198,7 +198,7 @@ void::Foam::TaylorGreenVortex2D::calcError()
 }
 
 
-void::Foam::TaylorGreenVortex2D::write()
+void Foam::TaylorGreenVortex2D::write()
 {
     Info << "writing to log file" << endl;
     if(Pstream::master())

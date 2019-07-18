@@ -149,7 +149,6 @@ public:
             return Ek_;
         }
 
-
         void setInitialFields(
             volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
         );

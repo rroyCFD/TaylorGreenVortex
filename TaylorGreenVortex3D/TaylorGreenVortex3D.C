@@ -34,7 +34,7 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-void::Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
+void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
 (
     volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
 )
@@ -59,7 +59,7 @@ void::Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
 }
 
 
-void::Foam::TaylorGreenVortex3D::setPropertiesOutput()
+void Foam::TaylorGreenVortex3D::setPropertiesOutput()
 {
     // create output file
     fileName outputDir;
@@ -146,7 +146,7 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
 }
 
-void::Foam::TaylorGreenVortex3D::write()
+void Foam::TaylorGreenVortex3D::write()
 {
     Info << "writing to log file" << endl;
     if(Pstream::master())
