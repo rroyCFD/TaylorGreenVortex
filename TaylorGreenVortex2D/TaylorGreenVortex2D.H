@@ -139,18 +139,16 @@ public:
             return pa_;
         }
 
-        dimensionedScalar epsilon()
+        inline dimensionedScalar epsilon()
         {
             return epsilon_;
         }
 
-        dimensionedScalar Ek()
+        inline dimensionedScalar Ek()
         {
             return Ek_;
         }
 
-
-        void calcGlobalProperties();
 
         void setInitialFields(
             volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
@@ -160,9 +158,18 @@ public:
 
         void setPropertiesOutput();
 
+        void calcGlobalProperties();
+
         void calcError();
 
         void write();
+
+        void setPrecision(label nPrecision)
+        {
+            globalPropertiesFile_().precision(nPrecision);
+            Info << "Output precision: "
+                 << globalPropertiesFile_().precision() << endl;
+        }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

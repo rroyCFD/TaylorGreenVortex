@@ -51,7 +51,7 @@ void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 {
     tmp<volScalarField> x_c = mesh_.C().component(vector::X);
     tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
-    tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
+    // tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
 
     Ua_ =  Uinit_*( vector(1,0,0) * sin(x_c.ref()/L_) * cos(y_c.ref()/L_)
                   - vector(0,1,0) * cos(x_c.ref()/L_) * sin(y_c.ref()/L_)
@@ -63,7 +63,7 @@ void::Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 
     x_c.clear();
     y_c.clear();
-    z_c.clear();
+    // z_c.clear();
 }
 
 
@@ -112,7 +112,7 @@ void::Foam::TaylorGreenVortex2D::setPropertiesOutput()
         << "Linf(U,t)" << tab << "Linf(p,t)"
         << endl;
 
-    globalPropertiesFile_().precision(8); // set precision
+    // globalPropertiesFile_().precision(8); // set precision
 
     Info << "TGV2D: Global properties are written in\n"
          << globalPropertiesFile_().name() << endl;
@@ -183,7 +183,7 @@ void::Foam::TaylorGreenVortex2D::calcError()
         dimensionedScalar pRefValSim(
             "", p_.dimensions(), getRefCellValue(p_, pRefCell_));
 
-        perror_ = pAna_.ref() - p_; //  - pRefValAna + pRefValSim
+        perror_ = pAna_.ref() - p_ - pRefValAna + pRefValSim; //
 
         pAna_.clear();
     }
@@ -283,7 +283,7 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
             runTime_.timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         (Ua_ - U_)
     ),
@@ -296,7 +296,7 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
             runTime_.timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         (pa_ - p_)
     ),
@@ -337,11 +337,10 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 
     // Set global properties output file
     setPropertiesOutput();
-    //Info << "Output precision: " << globalPropertiesFile_().precision() << endl;
 
     // Get molucular viscosity
     const dictionary& transportProperties_ =
-             mesh_.lookupObject<dictionary>("transportProperties");
+        mesh_.lookupObject<dictionary>("transportProperties");
 
     nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 

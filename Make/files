@@ -1,3 +1,6 @@
 TaylorGreenVortex2D/TaylorGreenVortex2D.C
+TaylorGreenVortex3D/TaylorGreenVortex3D.C
+
+TaylorGreenVortex/TaylorGreenVortex.C
 
 LIB = $(FOAM_USER_LIBBIN)/libTaylorGreenVortex
