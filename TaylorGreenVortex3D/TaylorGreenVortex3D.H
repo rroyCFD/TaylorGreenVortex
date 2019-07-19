@@ -141,6 +141,8 @@ public:
             globalPropertiesFile_().precision(nPrecision);
             Info << "Output precision: "
                  << globalPropertiesFile_().precision() << endl;
+
+            return;
         }
 };
 

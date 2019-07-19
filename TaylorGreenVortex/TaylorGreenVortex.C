@@ -46,6 +46,8 @@ void Foam::TaylorGreenVortex::setInitialFieldsAsAnalytical()
     {
         TaylorGreenVortex3D::setInitialFieldsAsAnalytical();
     }
+
+    return;
 }
 
 
@@ -59,6 +61,8 @@ void Foam::TaylorGreenVortex::setupProperties()
     {
         TaylorGreenVortex3D::setupProperties();
     }
+
+    return;
 }
 
 void Foam::TaylorGreenVortex::calcProperties()
@@ -76,6 +80,8 @@ void Foam::TaylorGreenVortex::calcProperties()
         // calculate Global Ek and epsilon values
         TaylorGreenVortex3D::calcGlobalProperties();
     }
+
+    return;
 }
 
 
@@ -90,6 +96,8 @@ void Foam::TaylorGreenVortex::writeProperties()
     {
         TaylorGreenVortex3D::write();
     }
+
+    return;
 }
 
 
@@ -103,6 +111,8 @@ void Foam::TaylorGreenVortex::setPrecision(label nPrecision)
     {
         TaylorGreenVortex3D::setPrecision(nPrecision);
     }
+
+    return;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

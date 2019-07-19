@@ -85,6 +85,7 @@ void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
     // CLear tmp fields
     x_c.clear(); y_c.clear(); z_c.clear();
 
+    return;
 }
 
 
@@ -144,6 +145,8 @@ void Foam::TaylorGreenVortex3D::setPropertiesOutput()
 
     Info << "TGV3D: Global properties are written in\n"
          << globalPropertiesFile_().name() << endl;
+
+    return;
 }
 
 
@@ -154,6 +157,8 @@ void Foam::TaylorGreenVortex3D::getNu()
         mesh_.lookupObject<dictionary>("transportProperties");
 
     nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
+
+    return;
 }
 
 
@@ -196,6 +201,8 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
 
     // Kinetic energy weighted average
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
+
+    return;
 }
 
 void Foam::TaylorGreenVortex3D::write()
@@ -210,6 +217,8 @@ void Foam::TaylorGreenVortex3D::write()
     globalPropertiesFile_()
         << runTime_.value()/tc_.value() << tab
         << Ek_.value() << tab << epsilon_.value() << endl;
+
+    return;
 }
 
 
@@ -227,6 +236,8 @@ void Foam::TaylorGreenVortex3D::setupProperties()
     write();
 
     Info << endl;
+
+    return;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

@@ -46,6 +46,8 @@ void Foam::TaylorGreenVortex2D::setAnalyticalFields
     pa_ = pIn;
 
     calcAnalytical_ =false;
+
+    return;
 }
 
 
@@ -66,6 +68,8 @@ void Foam::TaylorGreenVortex2D::setAnalyticalFields()
     y_c.clear();
 
     calcAnalytical_ =false;
+
+    return;
 }
 
 void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
@@ -91,6 +95,7 @@ void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
         phi_ = phia_*Foam::exp(-2.0*nu_().value()*runTime_.value());
    }
 
+    return;
 }
 
 
@@ -147,6 +152,8 @@ void Foam::TaylorGreenVortex2D::setPropertiesOutput()
 
     Info << "TGV2D: Global properties are written in\n"
          << globalPropertiesFile_().name() << endl;
+
+    return;
 }
 
 
@@ -199,6 +206,8 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
 
     // Kinetic energy weighted average
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
+
+    return;
 }
 
 
@@ -236,6 +245,7 @@ void Foam::TaylorGreenVortex2D::calcError()
     pLinfErr_.value() = gMax(mag(perror_)()); // infinity norm
     pL2err_ = sqrt(magSqr(perror_)().weightedAverage(mesh_.V()));  // 2nd norm
 
+    return;
 }
 
 
@@ -265,6 +275,7 @@ void Foam::TaylorGreenVortex2D::write()
             << endl;
     }
 
+    return;
 }
 
 
@@ -275,6 +286,8 @@ void Foam::TaylorGreenVortex2D::initializeFields()
 
     // Set initial fields equal to analytical
     setInitialFieldsAsAnalytical();
+
+    return;
 }
 
 
@@ -301,6 +314,8 @@ void Foam::TaylorGreenVortex2D::setupProperties()
     write();
 
     Info << endl;
+
+    return;
 }
 
 
