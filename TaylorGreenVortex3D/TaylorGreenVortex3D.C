@@ -96,6 +96,11 @@ void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical()
 
 void Foam::TaylorGreenVortex3D::setPropertiesOutput()
 {
+    if(Pstream::parRun() && !(Pstream::master()))
+    {
+        return;
+    }
+
     // create output file
     fileName outputDir;
     autoPtr<fileName> outFilePath_;
@@ -130,7 +135,6 @@ void Foam::TaylorGreenVortex3D::setPropertiesOutput()
     }
 
     globalPropertiesFile_.reset(new OFstream(*outFilePath_));
-    outFilePath_.clear();
 
     // write header of the log file
     globalPropertiesFile_()
@@ -196,6 +200,11 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
 
 void Foam::TaylorGreenVortex3D::write()
 {
+    if(Pstream::parRun() && !(Pstream::master()))
+    {
+        return;
+    }
+
     Info << "writing to log file" << endl;
 
     globalPropertiesFile_()

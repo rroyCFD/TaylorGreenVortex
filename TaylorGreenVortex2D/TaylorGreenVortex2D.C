@@ -96,6 +96,10 @@ void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 
 void Foam::TaylorGreenVortex2D::setPropertiesOutput()
 {
+    if(Pstream::parRun() && !(Pstream::master()))
+    {
+        return;
+    }
     // create output file
     fileName outputDir;
     autoPtr<fileName> outFilePath_;
@@ -237,6 +241,19 @@ void Foam::TaylorGreenVortex2D::calcError()
 
 void Foam::TaylorGreenVortex2D::write()
 {
+    // Write error fields
+    if(runTime_.outputTime())
+    {
+        perror_.write();
+        Uerror_.write();
+    }
+
+    // return if not the master directory
+    if(Pstream::parRun() && !(Pstream::master()))
+    {
+        return;
+    }
+
     Info << "writing to log file" << endl;
     if(Pstream::master())
     {
@@ -248,11 +265,6 @@ void Foam::TaylorGreenVortex2D::write()
             << endl;
     }
 
-    if(runTime_.outputTime())
-    {
-        perror_.write();
-        Uerror_.write();
-    }
 }
 
 
