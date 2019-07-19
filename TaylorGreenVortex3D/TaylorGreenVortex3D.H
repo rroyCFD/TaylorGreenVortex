@@ -63,32 +63,16 @@ class TaylorGreenVortex3D
 
         // Pointer to solver fields
         //- Extrapolated velocity field pointer
-        const volVectorField& U_;
+        // const volVectorField& U_;
+        volVectorField& U_;
 
         // Extrapolated surface volume flux pointer
-        const surfaceScalarField& phi_;
+        // const surfaceScalarField& phi_;
+        surfaceScalarField& phi_;
 
         // pressure field p pointer
-        const volScalarField& p_;
-
-        // const label& pRefCell_;
-
-        // const bool pRefOn_;
-
-        // // analytical velocity, flux and pressure field
-        // volVectorField Ua_;
-        // surfaceScalarField phia_;
-        // volScalarField pa_;
-
-        // // error fields and error norms
-        // volVectorField Uerror_;
-        // volScalarField perror_;
-
-        // dimensionedScalar ULinfErr_;
-        // dimensionedScalar UL2err_;
-
-        // dimensionedScalar pLinfErr_;
-        // dimensionedScalar pL2err_;
+        // const volScalarField& p_;
+        volScalarField& p_;
 
         // Case characteristic properties
         IOdictionary TGV3DProperties_;
@@ -114,30 +98,18 @@ public:
     // Constructors
     TaylorGreenVortex3D
     (
-        const volVectorField& U,
-        const surfaceScalarField& phi,
-        const volScalarField& p
+        // const volVectorField& U,
+        // const surfaceScalarField& phi,
+        // const volScalarField& p
+        volVectorField& U,
+        surfaceScalarField& phi,
+        volScalarField& p
     );
 
     // Destructor
     virtual ~TaylorGreenVortex3D();
 
     // Public Member functions
-        // volVectorField getUAnalytical()
-        // {
-        //     return Ua_;
-        // }
-
-        // surfaceScalarField getPhiAnalytical()
-        // {
-        //     return phia_;
-        // }
-
-        // volScalarField getPAnalytical()
-        // {
-        //     return pa_;
-        // }
-
         inline dimensionedScalar epsilon()
         {
             return epsilon_;
@@ -149,21 +121,18 @@ public:
         }
 
         // call-up the initial member functions in case of parent class
-        void setup();
-
-        // void setInitialFields(
-        //     volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
-        // );
+        void setupProperties();
 
         void setInitialFieldsAsAnalytical(
-            volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
+            volVectorField& UIn, surfaceScalarField& phiIn, volScalarField& pIn
         );
+        void setInitialFieldsAsAnalytical();
+
+        void getNu();
 
         void setPropertiesOutput();
 
         void calcGlobalProperties();
-
-        // void calcError();
 
         void write();
 

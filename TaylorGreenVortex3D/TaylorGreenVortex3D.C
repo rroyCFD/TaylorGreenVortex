@@ -36,26 +36,61 @@ namespace Foam
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
 (
-    volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
+    volVectorField& UIn, surfaceScalarField& phiIn, volScalarField& pIn
 )
 {
     tmp<volScalarField> x_c = mesh_.C().component(vector::X);
     tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
     tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
 
-    UIn =  Uinit_*(
-        vector(1,0,0) * sin(x_c.ref()/L_) * cos(y_c.ref()/L_)* cos(z_c.ref()/L_)
-      - vector(0,1,0) * cos(x_c.ref()/L_) * sin(y_c.ref()/L_)* cos(z_c.ref()/L_)
-      + vector(0,0,1) * scalar(0.));
+    Info << "Time " << runTime_.timeName()
+         << ": making U and p analytical; phi is interpolated." << endl;
 
-    phiIn = fvc::interpolate(U_)& mesh_.Sf();
+    // pressure field
+    {
+        volScalarField pA = sqr(Uinit_)/16 *
+            (cos(2.*x_c.ref()/L_) + cos(2.*y_c.ref()/L_))*(cos(2*z_c.ref()/L_) + 2);
 
-    pIn = sqr(Uinit_)/16 *
-        (cos(2.*x_c.ref()/L_) + cos(2.*y_c.ref()/L_))*(cos(2*z_c.ref()/L_) + 2);
+        if(runTime_.startTime().value() == 0)
+        {
+           pIn   = pA;
+        }
+        else
+        {
+            pIn   = pA*Foam::exp(-4.0*nu_().value()*runTime_.value());
+        }
+    }
 
-    x_c.clear();
-    y_c.clear();
-    z_c.clear();
+
+    // Velocity field
+    {
+        volVectorField UA =  Uinit_*(
+            vector(1,0,0) * sin(x_c.ref()/L_) * cos(y_c.ref()/L_)* cos(z_c.ref()/L_)
+          - vector(0,1,0) * cos(x_c.ref()/L_) * sin(y_c.ref()/L_)* cos(z_c.ref()/L_)
+          + vector(0,0,1) * scalar(0.));
+
+        if(runTime_.startTime().value() == 0)
+        {
+            UIn   = UA;
+        }
+        else
+        {
+            UIn   = UA*Foam::exp(-2.0*nu_().value()*runTime_.value());
+        }
+    }
+
+    // Vol. Flux
+    phiIn = fvc::interpolate(UIn)& mesh_.Sf();
+
+    // CLear tmp fields
+    x_c.clear(); y_c.clear(); z_c.clear();
+
+}
+
+
+void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical()
+{
+    setInitialFieldsAsAnalytical (U_, phi_, p_);
 }
 
 
@@ -95,13 +130,26 @@ void Foam::TaylorGreenVortex3D::setPropertiesOutput()
     }
 
     globalPropertiesFile_.reset(new OFstream(*outFilePath_));
+    outFilePath_.clear();
 
     // write header of the log file
     globalPropertiesFile_()
         << "time" << tab << "Ek(t)" << tab << "epsilon(t)" << tab << endl;
 
+    globalPropertiesFile_().precision(12); // set precision
+
     Info << "TGV3D: Global properties are written in\n"
          << globalPropertiesFile_().name() << endl;
+}
+
+
+void Foam::TaylorGreenVortex3D::getNu()
+{
+    // Get molucular viscosity
+    const dictionary& transportProperties_ =
+        mesh_.lookupObject<dictionary>("transportProperties");
+
+    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 }
 
 
@@ -149,27 +197,19 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
 void Foam::TaylorGreenVortex3D::write()
 {
     Info << "writing to log file" << endl;
-    if(Pstream::master())
-    {
-        globalPropertiesFile_()
-            << runTime_.value()/tc_.value() << tab
-            << Ek_.value() << tab << epsilon_.value() << endl;
-    }
+
+    globalPropertiesFile_()
+        << runTime_.value()/tc_.value() << tab
+        << Ek_.value() << tab << epsilon_.value() << endl;
 }
 
 
-void Foam::TaylorGreenVortex3D::setup()
+void Foam::TaylorGreenVortex3D::setupProperties()
 {
-    Info << "TaylorGreenVortex3D object setup:" << endl;
+    Info << "TaylorGreenVortex3D properties setup:" << endl;
 
     // Set global properties output file
     setPropertiesOutput();
-
-    // Get molucular viscosity
-    const dictionary& transportProperties_ =
-        mesh_.lookupObject<dictionary>("transportProperties");
-
-    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 
     // calculate Global Ek and epsilon values
     calcGlobalProperties();
@@ -184,9 +224,13 @@ void Foam::TaylorGreenVortex3D::setup()
 
 Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
 (
-    const volVectorField& U,
-    const surfaceScalarField& phi,
-    const volScalarField& p
+    // const volVectorField& U,
+    // const surfaceScalarField& phi,
+    // const volScalarField& p
+
+    volVectorField& U,
+    surfaceScalarField& phi,
+    volScalarField& p
 )
 :
     // Set the pointer to runTime
@@ -224,21 +268,6 @@ Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
 
 {
     // Info << "TaylorGreenVortex3D constructor" << endl;
-
-    // // Set global properties output file
-    // setPropertiesOutput();
-
-    // // Get molucular viscosity
-    // const dictionary& transportProperties_ =
-    //     mesh_.lookupObject<dictionary>("transportProperties");
-
-    // nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
-
-    // // calculate Global Ek and epsilon values
-    // calcGlobalProperties();
-
-    // // write to log files
-    // write();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

@@ -63,15 +63,19 @@ class TaylorGreenVortex2D
 
         // Pointer to solver fields
         //- Extrapolated velocity field pointer
-        const volVectorField& U_;
+        // const volVectorField& U_;
+        volVectorField& U_;
 
         // Extrapolated surface volume flux pointer
-        const surfaceScalarField& phi_;
+        // const surfaceScalarField& phi_;
+        surfaceScalarField& phi_;
 
         // pressure field p pointer
-        const volScalarField& p_;
+        // const volScalarField& p_;
+        volScalarField& p_;
 
-        const label& pRefCell_;
+        // const label& pRefCell_;
+        label& pRefCell_;
 
         const bool pRefOn_;
 
@@ -79,6 +83,8 @@ class TaylorGreenVortex2D
         volVectorField Ua_;
         surfaceScalarField phia_;
         volScalarField pa_;
+
+        bool calcAnalytical_;
 
         // error fields and error norms
         volVectorField Uerror_;
@@ -114,10 +120,15 @@ public:
     // Constructors
     TaylorGreenVortex2D
     (
-        const volVectorField& U,
-        const surfaceScalarField& phi,
-        const volScalarField& p,
-        const label& pRefCell
+        // const volVectorField& U,
+        // const surfaceScalarField& phi,
+        // const volScalarField& p,
+        // const label& pRefCell
+
+        volVectorField& U,
+        surfaceScalarField& phi,
+        volScalarField& p,
+        label& pRefCell
     );
 
     // Destructor
@@ -149,14 +160,20 @@ public:
             return Ek_;
         }
 
-        // call-up the initial member functions in case of parent class
-        void setup();
+        void initializeFields();
 
-        void setInitialFields(
+        // call-up the initial member functions in case of parent class
+        void setupProperties();
+
+        void setAnalyticalFields();
+
+        void setAnalyticalFields(
             volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
         );
 
         void setInitialFieldsAsAnalytical();
+
+        void getNu();
 
         void setPropertiesOutput();
 

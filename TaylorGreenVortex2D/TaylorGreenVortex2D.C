@@ -34,7 +34,7 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-void Foam::TaylorGreenVortex2D::setInitialFields
+void Foam::TaylorGreenVortex2D::setAnalyticalFields
 (
     volVectorField UIn,
     surfaceScalarField phiIn,
@@ -44,14 +44,15 @@ void Foam::TaylorGreenVortex2D::setInitialFields
     Ua_ = UIn;
     phia_ = phiIn;
     pa_ = pIn;
+
+    calcAnalytical_ =false;
 }
 
 
-void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
+void Foam::TaylorGreenVortex2D::setAnalyticalFields()
 {
     tmp<volScalarField> x_c = mesh_.C().component(vector::X);
     tmp<volScalarField> y_c = mesh_.C().component(vector::Y);
-    // tmp<volScalarField> z_c = mesh_.C().component(vector::Z);
 
     Ua_ =  Uinit_*( vector(1,0,0) * sin(x_c.ref()/L_) * cos(y_c.ref()/L_)
                   - vector(0,1,0) * cos(x_c.ref()/L_) * sin(y_c.ref()/L_)
@@ -63,7 +64,33 @@ void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
 
     x_c.clear();
     y_c.clear();
-    // z_c.clear();
+
+    calcAnalytical_ =false;
+}
+
+void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
+{
+    if(calcAnalytical_)
+    {
+        setAnalyticalFields();
+    }
+
+    Info << "Time " << runTime_.timeName()
+         << ": making U and p analytical; phi is interpolated." << endl;
+
+    if(runTime_.startTime().value() == 0)
+    {
+       p_   = pa_;
+       U_   = Ua_;
+       phi_ = phia_;
+   }
+   else
+   {
+        p_   = pa_*Foam::exp(-4.0*nu_().value()*runTime_.value());
+        U_   = Ua_*Foam::exp(-2.0*nu_().value()*runTime_.value());
+        phi_ = phia_*Foam::exp(-2.0*nu_().value()*runTime_.value());
+   }
+
 }
 
 
@@ -112,10 +139,20 @@ void Foam::TaylorGreenVortex2D::setPropertiesOutput()
         << "Linf(U,t)" << tab << "Linf(p,t)"
         << endl;
 
-    // globalPropertiesFile_().precision(8); // set precision
+    globalPropertiesFile_().precision(12); // set precision
 
     Info << "TGV2D: Global properties are written in\n"
          << globalPropertiesFile_().name() << endl;
+}
+
+
+void Foam::TaylorGreenVortex2D::getNu()
+{
+    // Get molucular viscosity
+    const dictionary& transportProperties_ =
+        mesh_.lookupObject<dictionary>("transportProperties");
+
+    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 }
 
 
@@ -128,8 +165,8 @@ void Foam::TaylorGreenVortex2D::calcGlobalProperties()
     // volScalarField dissipation =
     //     (U_ &
     //         (
-    //             fvc::laplacian(nu_, U_)
-    //           + fvc::div(nu_*dev(T(fvc::grad(U_))))
+    //             fvc::laplacian(nu_(), U_)
+    //           + fvc::div(nu_()*dev(T(fvc::grad(U_))))
     //         )
     //     );
 
@@ -210,21 +247,37 @@ void Foam::TaylorGreenVortex2D::write()
             << ULinfErr_.value() << tab << pLinfErr_.value()
             << endl;
     }
+
+    if(runTime_.outputTime())
+    {
+        perror_.write();
+        Uerror_.write();
+    }
 }
 
 
-void Foam::TaylorGreenVortex2D::setup()
+void Foam::TaylorGreenVortex2D::initializeFields()
 {
-    Info << "TaylorGreenVortex2D object setup:" << endl;
+    // Calculate analytical fields
+    setAnalyticalFields();
+
+    // Set initial fields equal to analytical
+    setInitialFieldsAsAnalytical();
+}
+
+
+void Foam::TaylorGreenVortex2D::setupProperties()
+{
+    Info << "TaylorGreenVortex2D properties setup:" << endl;
+
+    // Set analytical fields
+    if(calcAnalytical_)
+    {
+        setAnalyticalFields();
+    }
 
     // Set global properties output file
     setPropertiesOutput();
-
-    // Get molucular viscosity
-    const dictionary& transportProperties_ =
-        mesh_.lookupObject<dictionary>("transportProperties");
-
-    nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
 
     // calculate error fields and error norms
     calcError();
@@ -243,10 +296,15 @@ void Foam::TaylorGreenVortex2D::setup()
 
 Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 (
-    const volVectorField& U,
-    const surfaceScalarField& phi,
-    const volScalarField& p,
-    const label& pRefCell
+    // const volVectorField& U,
+    // const surfaceScalarField& phi,
+    // const volScalarField& p,
+    // const label& pRefCell
+
+    volVectorField& U,
+    surfaceScalarField& phi,
+    volScalarField& p,
+    label& pRefCell
 )
 :
     // Set the pointer to runTime
@@ -301,6 +359,8 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
         p_
     ),
 
+    calcAnalytical_(true),
+
     Uerror_
     (
         IOobject
@@ -309,7 +369,7 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
             runTime_.timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE // AUTO_WRITE
         ),
         (Ua_ - U_)
     ),
@@ -322,7 +382,7 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
             runTime_.timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE // AUTO_WRITE
         ),
         (pa_ - p_)
     ),
@@ -360,24 +420,6 @@ Foam::TaylorGreenVortex2D::TaylorGreenVortex2D
 
 {
     // Info << "TaylorGreenVortex2D constructor" << endl;
-
-    // // Set global properties output file
-    // setPropertiesOutput();
-
-    // // Get molucular viscosity
-    // const dictionary& transportProperties_ =
-    //     mesh_.lookupObject<dictionary>("transportProperties");
-
-    // nu_.reset(new dimensionedScalar ("nu", dimViscosity, transportProperties_));
-
-    // // calculate error fields and error norms
-    // calcError();
-
-    // // calculate Global Ek and epsilon values
-    // calcGlobalProperties();
-
-    // // write to log files
-    // write();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
