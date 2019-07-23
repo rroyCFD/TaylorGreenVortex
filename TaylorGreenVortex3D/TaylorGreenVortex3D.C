@@ -92,6 +92,9 @@ void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
 void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical()
 {
     setInitialFieldsAsAnalytical (U_, phi_, p_);
+    U_.write();
+    phi_.write();
+    p_.write();
 }
 
 

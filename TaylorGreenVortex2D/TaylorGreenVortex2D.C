@@ -95,6 +95,10 @@ void Foam::TaylorGreenVortex2D::setInitialFieldsAsAnalytical()
         phi_ = phia_*Foam::exp(-2.0*nu_().value()*runTime_.value());
    }
 
+   U_.write();
+   phi_.write();
+   p_.write();
+
     return;
 }
 
