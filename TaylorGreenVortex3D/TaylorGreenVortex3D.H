@@ -80,9 +80,12 @@ class TaylorGreenVortex3D
         dimensionedScalar L_;        //  characteristic length scale
         dimensionedScalar tc_;       // characteristic time scale
         dimensionedScalar epsilon_;  // dissipation rate
+        dimensionedScalar viscEpsilon_;  // viscous dissipation rate
+        dimensionedScalar turbEpsilon_;  // turbulent dissipation rate
         dimensionedScalar Ek_;       // kinetic energy
 
-        autoPtr<dimensionedScalar> nu_;
+        dimensionedScalar nu_;
+        autoPtr<dimensionedScalar> nuPtr_;
 
         //- Output file pointer
         autoPtr<OFstream> globalPropertiesFile_;
