@@ -174,31 +174,31 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
 
     Info << "Calculating kinetic energy and dissipation rate" << endl;
 
-    // Generic turbulence model case
-    tmp<volScalarField> nuEff
-    (
-        mesh_.lookupObject<turbulenceModel>
+    // Calculate total dissipation rate
+    {
+        const volScalarField& nuEff
         (
-            turbulenceModel::propertiesName
-        ).nuEff()
-    );
-
-    volScalarField dissipation =
-        (U_ &
+            mesh_.lookupObject<turbulenceModel>
             (
-                fvc::laplacian(nuEff.ref(), U_)
-              + fvc::div(nuEff.ref()*dev(T(fvc::grad(U_))))
-            )
+                turbulenceModel::propertiesName
+            ).nuEff()
         );
 
-    nuEff.clear();
+        tmp<volScalarField> dissipation =
+            (U_ &
+                (
+                    fvc::laplacian(nuEff, U_)
+                  + fvc::div(nuEff*dev(T(fvc::grad(U_))))
+                )
+            );
 
-    // dissipation rate weighted average
-    epsilon_ = dissipation.weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
+        // volume weighted average
+        epsilon_ = dissipation().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
+        dissipation.clear();
+    }
 
-
+    // Calculate viscous dissipation rate
     {
-        // viscous dissipation case
         tmp<volScalarField> viscDissipation =
             (U_ &
                 (
@@ -207,17 +207,16 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
                 )
             );
 
-        // dissipation rate weighted average
+        // volume weighted average
         viscEpsilon_ =
         viscDissipation().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
         viscDissipation.clear();
-
-
-        // dissipation from the turbulence model
-        turbEpsilon_ = (epsilon_ - viscEpsilon_);
     }
 
-    // Kinetic energy weighted average
+    // Calculate dissipation rate from the turbulence model
+    turbEpsilon_ = (epsilon_ - viscEpsilon_);
+
+    // Kinetic energy: volume weighted average
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
 
     return;
