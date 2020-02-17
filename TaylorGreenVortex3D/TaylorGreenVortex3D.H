@@ -81,7 +81,10 @@ class TaylorGreenVortex3D
         dimensionedScalar tc_;       // characteristic time scale
         dimensionedScalar epsilon_;  // dissipation rate
         dimensionedScalar viscEpsilon_;  // viscous dissipation rate
-        dimensionedScalar turbEpsilon_;  // turbulent dissipation rate
+        dimensionedScalar lapTurbEpsilon_ ; // laplacian cmpt of turb dissip
+        dimensionedScalar divGradTurbEpsilon_;// divGrad cmpt of turb dissip
+        dimensionedScalar turbEpsilon_;  // total turbulent dissipation rate
+
         dimensionedScalar Ek_;       // kinetic energy
 
         dimensionedScalar nu_;
