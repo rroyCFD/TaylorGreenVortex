@@ -76,6 +76,7 @@ class TaylorGreenVortex3D
 
         // Case characteristic properties
         IOdictionary TGV3DProperties_;
+
         dimensionedScalar Uinit_;    // initial Velocity
         dimensionedScalar L_;        //  characteristic length scale
         dimensionedScalar tc_;       // characteristic time scale
@@ -92,6 +93,8 @@ class TaylorGreenVortex3D
 
         //- Output file pointer
         autoPtr<OFstream> globalPropertiesFile_;
+
+        word modelType_;             // turb model type
 
     // Private member functions
 

@@ -219,19 +219,27 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
     }
 
     // Get turbulence contribution
+    if(modelType_ != "laminar")
     {
         // Get turbulent eddy viscosity coeff
-        tmp<volScalarField> nut
-        (
-            mesh_.lookupObject<turbulenceModel>
-            (
-                turbulenceModel::propertiesName
-            ).nut()
-        );
+        // Pointing from tubulence model doest not update read-time nut
+        // tmp<volScalarField> nut
+        // (
+        //     mesh_.lookupObject<turbulenceModel>
+        //     (
+        //         turbulenceModel::propertiesName
+        //     ).nut()
+        // );
+
+        // Hard-coded nut
+        const volScalarField& nut = mesh_.lookupObject<volScalarField>("nut");
+
+        Info << "\tmin(nut): " << min(nut).value()
+         << "\tmax(nut) " << max(nut).value() << endl;
 
         // turb dissipation from laplacian operation
         tmp<volScalarField> lapTurbDissipRate =
-            U_ & (fvc::laplacian(nut(), U_));
+            U_ & (fvc::laplacian(nut, U_));
 
         lapTurbEpsilon_ =
         lapTurbDissipRate().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
@@ -239,7 +247,7 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
 
         // turb dissipation from divergence of transposed gradient operation
         tmp<volScalarField> divGradTurbDissipRate =
-            U_ & (fvc::div(nut() * dev(T(fvc::grad(U_))) ));
+            U_ & (fvc::div(nut * dev(T(fvc::grad(U_))) ));
 
         divGradTurbEpsilon_ =
         divGradTurbDissipRate().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
@@ -348,10 +356,27 @@ Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
 
     Ek_ ("Ek", dimless, 0.0),
 
-    nu_("nu",dimViscosity, SMALL)
+    nu_("nu",dimViscosity, SMALL),
+
+    modelType_ (
+        IOdictionary
+        (
+            IOobject
+            (
+                "turbulenceProperties",
+                runTime_.constant(),
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        ).lookup("simulationType")
+    )
+
 {
     // Info << "TaylorGreenVortex3D constructor" << endl;
     getNu();
+
+    Info << "\tTurbModel type: " << modelType_ << endl;
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
