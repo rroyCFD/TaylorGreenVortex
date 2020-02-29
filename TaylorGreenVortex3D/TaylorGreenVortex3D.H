@@ -76,12 +76,16 @@ class TaylorGreenVortex3D
 
         // Case characteristic properties
         IOdictionary TGV3DProperties_;
+
         dimensionedScalar Uinit_;    // initial Velocity
         dimensionedScalar L_;        //  characteristic length scale
         dimensionedScalar tc_;       // characteristic time scale
         dimensionedScalar epsilon_;  // dissipation rate
         dimensionedScalar viscEpsilon_;  // viscous dissipation rate
-        dimensionedScalar turbEpsilon_;  // turbulent dissipation rate
+        dimensionedScalar lapTurbEpsilon_ ; // laplacian cmpt of turb dissip
+        dimensionedScalar divGradTurbEpsilon_;// divGrad cmpt of turb dissip
+        dimensionedScalar turbEpsilon_;  // total turbulent dissipation rate
+
         dimensionedScalar Ek_;       // kinetic energy
 
         dimensionedScalar nu_;
@@ -89,6 +93,8 @@ class TaylorGreenVortex3D
 
         //- Output file pointer
         autoPtr<OFstream> globalPropertiesFile_;
+
+        word modelType_;             // turb model type
 
     // Private member functions
 

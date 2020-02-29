@@ -142,8 +142,13 @@ void Foam::TaylorGreenVortex3D::setPropertiesOutput()
 
     // write header of the log file
     globalPropertiesFile_()
-        << "time" << tab << "Ek(t)" << tab << "epsilon(t)" << tab
-        << "viscous-epsilon(t)" << tab << "turbulent-epsilon(t)" << endl;
+        << "time" << tab
+        << "Ek(t)" << tab
+        << "epsilon(t)" << tab
+        << "viscous-epsilon(t)" << tab
+        << "lapTurb-epsilon(t)" << tab
+        << "divGradTurb-epsilon(t)" << tab
+        << "turbulent-epsilon(t)" << endl;
 
     globalPropertiesFile_().precision(12); // set precision
 
@@ -173,31 +178,6 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
 {
 
     Info << "Calculating kinetic energy and dissipation rate" << endl;
-
-    // Calculate total dissipation rate
-    {
-        const volScalarField& nuEff
-        (
-            mesh_.lookupObject<turbulenceModel>
-            (
-                turbulenceModel::propertiesName
-            ).nuEff()
-        );
-
-        tmp<volScalarField> dissipation =
-            (U_ &
-                (
-                    fvc::laplacian(nuEff, U_)
-                  + fvc::div(nuEff*dev(T(fvc::grad(U_))))
-                )
-            );
-
-        // volume weighted average
-        epsilon_ = dissipation().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
-        dissipation.clear();
-    }
-
-    // Calculate viscous dissipation rate
     {
         tmp<volScalarField> viscDissipation =
             (U_ &
@@ -213,10 +193,49 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
         viscDissipation.clear();
     }
 
-    // Calculate dissipation rate from the turbulence model
-    turbEpsilon_ = (epsilon_ - viscEpsilon_);
+    // Get turbulence contribution
+    if(modelType_ != "laminar")
+    {
+        // Get turbulent eddy viscosity coeff
+        // Pointing from tubulence model doest not update read-time nut
+        // tmp<volScalarField> nut
+        // (
+        //     mesh_.lookupObject<turbulenceModel>
+        //     (
+        //         turbulenceModel::propertiesName
+        //     ).nut()
+        // );
 
-    // Kinetic energy: volume weighted average
+        // Hard-coded nut
+        const volScalarField& nut = mesh_.lookupObject<volScalarField>("nut");
+
+        Info << "\tmin(nut): " << min(nut).value()
+         << "\tmax(nut) " << max(nut).value() << endl;
+
+        // turb dissipation from laplacian operation
+        tmp<volScalarField> lapTurbDissipRate =
+            U_ & (fvc::laplacian(nut, U_));
+
+        lapTurbEpsilon_ =
+        lapTurbDissipRate().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
+        lapTurbDissipRate.clear();
+
+        // turb dissipation from divergence of transposed gradient operation
+        tmp<volScalarField> divGradTurbDissipRate =
+            U_ & (fvc::div(nut * dev(T(fvc::grad(U_))) ));
+
+        divGradTurbEpsilon_ =
+        divGradTurbDissipRate().weightedAverage(mesh_.V())/(pow(Uinit_,3)/L_);
+        divGradTurbDissipRate.clear();
+
+        // total dissipation from the turbulence model
+        turbEpsilon_ = (lapTurbEpsilon_ + divGradTurbEpsilon_);
+    }
+
+    // Total dissipation (viscous + turbulent)
+    epsilon_ = (viscEpsilon_ + turbEpsilon_);
+
+    // Kinetic energy weighted average
     Ek_ = 0.5*magSqr(U_)().weightedAverage(mesh_.V())/ pow(Uinit_,2);
 
     return;
@@ -233,8 +252,12 @@ void Foam::TaylorGreenVortex3D::write()
 
     globalPropertiesFile_()
         << runTime_.value()/tc_.value() << tab
-        << Ek_.value() << tab << epsilon_.value() << tab
-        << viscEpsilon_.value() << tab << turbEpsilon_.value() << endl;
+        << Ek_.value() << tab
+        << epsilon_.value() << tab
+        << viscEpsilon_.value() << tab
+        << lapTurbEpsilon_.value() << tab
+        << divGradTurbEpsilon_.value() << tab
+        << turbEpsilon_.value() << endl;
 
     return;
 }
@@ -302,14 +325,33 @@ Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
 
     epsilon_ ("epsilon", dimless, 0.0),
     viscEpsilon_ ("viscEpsilon", dimless, 0.0),
+    lapTurbEpsilon_("lapTurbEpsilon", dimless, 0.0),
+    divGradTurbEpsilon_("divGradTurbEpsilon", dimless, 0.0),
     turbEpsilon_ ("turbEpsilon", dimless, 0.0),
 
     Ek_ ("Ek", dimless, 0.0),
 
-    nu_("nu",dimViscosity, SMALL)
+    nu_("nu",dimViscosity, SMALL),
+
+    modelType_ (
+        IOdictionary
+        (
+            IOobject
+            (
+                "turbulenceProperties",
+                runTime_.constant(),
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        ).lookup("simulationType")
+    )
+
 {
     // Info << "TaylorGreenVortex3D constructor" << endl;
     getNu();
+
+    Info << "\tTurbModel type: " << modelType_ << endl;
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
