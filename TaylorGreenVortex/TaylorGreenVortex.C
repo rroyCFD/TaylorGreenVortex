@@ -33,146 +33,21 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-
-void Foam::TaylorGreenVortex::setInitialFieldsAsAnalytical()
-{
-   if(dimension_ == "2D")
-    {
-        TaylorGreenVortex2D::setInitialFieldsAsAnalytical();
-    }
-    else
-    {
-        TaylorGreenVortex3D::setInitialFieldsAsAnalytical();
-    }
-
-    return;
-}
-
-
-void Foam::TaylorGreenVortex::setupProperties()
-{
-   if(dimension_ == "2D")
-    {
-        TaylorGreenVortex2D::setupProperties();
-    }
-    else
-    {
-        TaylorGreenVortex3D::setupProperties();
-    }
-
-    return;
-}
-
-void Foam::TaylorGreenVortex::calcProperties()
-{
-    if(dimension_ == "2D")
-    {
-        // calculate error fields and error norms
-        TaylorGreenVortex2D::calcError();
-
-        // calculate Global Ek and epsilon values
-        TaylorGreenVortex2D::calcGlobalProperties();
-    }
-    else
-    {
-        // calculate Global Ek and epsilon values
-        TaylorGreenVortex3D::calcGlobalProperties();
-    }
-
-    return;
-}
-
-
-void Foam::TaylorGreenVortex::writeProperties()
-{
-    // write to log files
-    if(dimension_ == "2D")
-    {
-        TaylorGreenVortex2D::write();
-    }
-    else
-    {
-        TaylorGreenVortex3D::write();
-    }
-
-    return;
-}
-
-
-void Foam::TaylorGreenVortex::setPrecision(label nPrecision)
-{
-    if(dimension_ == "2D")
-    {
-        TaylorGreenVortex2D::setPrecision(nPrecision);
-    }
-    else
-    {
-        TaylorGreenVortex3D::setPrecision(nPrecision);
-    }
-
-    return;
-}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::TaylorGreenVortex::TaylorGreenVortex
 (
-    // const volVectorField& U,
-    // const surfaceScalarField& phi,
-    // const volScalarField& p,
-    // const label& pRefCell
-
-    volVectorField& U,
-    surfaceScalarField& phi,
-    volScalarField& p,
-    label& pRefCell
+    const volVectorField& U
 )
 :
-    // constructor of parent classes
-    TaylorGreenVortex2D (U, phi, p, pRefCell),
-    TaylorGreenVortex3D (U, phi, p),
-
     // Set the pointer to runTime
     runTime_(U.time()),
 
     // Set the pointer to the mesh
-    mesh_(U.mesh()),
-
-    TGVProperties_
-    (
-        IOobject
-        (
-            "TaylorGreenVortexProperties",
-            runTime_.constant(),
-            mesh_,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
-    ),
-
-    // dimension_(TGVProperties_.lookupOrDefault<word>("dimension", "1D"))
-    dimension_(TGVProperties_.lookup("dimension"))
+    mesh_(U.mesh())
 {
-    Info << "TaylorGreenVortex constructor" << endl;
-
-    if (dimension_ == "2D")
-    {
-        TaylorGreenVortex2D::getNu();
-        Info << "Taylor-Green Vortex dimension is " << dimension_ << endl;
-    }
-    else if (dimension_ == "3D")
-    {
-        TaylorGreenVortex3D::getNu();
-        Info << "Taylor-Green Vortex dimension is " << dimension_ << endl;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Taylor-Green Vortex dimension " << dimension_ << " is invalid!"
-            << "\n Options are 2D or 3D." << abort(FatalError);
-    }
+    Info << "TaylorGreenVortex base class constructor" << endl;
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

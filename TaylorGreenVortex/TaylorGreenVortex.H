@@ -41,8 +41,6 @@ SourceFiles
 #include "OFstream.H"
 #include "vector.H"
 
-#include "TaylorGreenVortex2D.H"
-#include "TaylorGreenVortex3D.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -54,7 +52,7 @@ namespace Foam
                            Class TaylorGreenVortex Declaration
 \*---------------------------------------------------------------------------*/
 
-class TaylorGreenVortex : public TaylorGreenVortex2D, public TaylorGreenVortex3D
+class TaylorGreenVortex
 {
     // Private data
 
@@ -63,10 +61,6 @@ class TaylorGreenVortex : public TaylorGreenVortex2D, public TaylorGreenVortex3D
 
         //- Mesh pointer
         const fvMesh& mesh_;
-
-        // Case characteristic properties
-        IOdictionary TGVProperties_;
-        const word dimension_;
 
     // Private member functions
 
@@ -79,30 +73,26 @@ public:
     // Constructors
     TaylorGreenVortex
     (
-        // const volVectorField& U,
-        // const surfaceScalarField& phi,
-        // const volScalarField& p,
-        // const label& pRefCell
-
-        volVectorField& U,
-        surfaceScalarField& phi,
-        volScalarField& p,
-        label& pRefCell
+        const volVectorField& U
     );
 
     // Destructor
     virtual ~TaylorGreenVortex();
 
     // Public Member functions
-        void setInitialFieldsAsAnalytical();
+        virtual void setInitialFieldsAsAnalytical(
+            volVectorField& UIn,
+            surfaceScalarField& phiIn,
+            volScalarField& pIn
+        ) = 0;
 
-        void setupProperties();
+        virtual void setPropertiesOutput() = 0;
 
-        void calcProperties();
+        virtual void calcGlobalProperties() = 0;
 
-        void writeProperties();
+        virtual void writeGlobalProperties() = 0;
 
-        void setPrecision(label nPrecision);
+        virtual void setPrecision(label nPrecision) = 0;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

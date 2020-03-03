@@ -40,6 +40,8 @@ SourceFiles
 #include "turbulenceModel.H"
 #include "OFstream.H"
 #include "vector.H"
+
+#include "TaylorGreenVortex.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -51,7 +53,7 @@ namespace Foam
                            Class TaylorGreenVortex3D Declaration
 \*---------------------------------------------------------------------------*/
 
-class TaylorGreenVortex3D
+class TaylorGreenVortex3D  : public TaylorGreenVortex
 {
     // Private data
 
@@ -63,16 +65,13 @@ class TaylorGreenVortex3D
 
         // Pointer to solver fields
         //- Extrapolated velocity field pointer
-        // const volVectorField& U_;
-        volVectorField& U_;
+        const volVectorField& U_;
 
         // Extrapolated surface volume flux pointer
-        // const surfaceScalarField& phi_;
-        surfaceScalarField& phi_;
+        const surfaceScalarField& phi_;
 
         // pressure field p pointer
-        // const volScalarField& p_;
-        volScalarField& p_;
+        const volScalarField& p_;
 
         // Case characteristic properties
         IOdictionary TGV3DProperties_;
@@ -98,6 +97,8 @@ class TaylorGreenVortex3D
 
     // Private member functions
 
+        void getNu();
+
 
 public:
 
@@ -107,12 +108,9 @@ public:
     // Constructors
     TaylorGreenVortex3D
     (
-        // const volVectorField& U,
-        // const surfaceScalarField& phi,
-        // const volScalarField& p
-        volVectorField& U,
-        surfaceScalarField& phi,
-        volScalarField& p
+        const volVectorField& U,
+        const surfaceScalarField& phi,
+        const volScalarField& p
     );
 
     // Destructor
@@ -129,23 +127,20 @@ public:
             return Ek_;
         }
 
-        // call-up the initial member functions in case of parent class
-        void setupProperties();
-
-        void setInitialFieldsAsAnalytical(
-            volVectorField& UIn, surfaceScalarField& phiIn, volScalarField& pIn
+        //--------------------------------------------------------------------//
+        virtual void setInitialFieldsAsAnalytical(
+            volVectorField& UIn,
+            surfaceScalarField& phiIn,
+            volScalarField& pIn
         );
-        void setInitialFieldsAsAnalytical();
 
-        void getNu();
+        virtual void setPropertiesOutput();
 
-        void setPropertiesOutput();
+        virtual void calcGlobalProperties();
 
-        void calcGlobalProperties();
+        virtual void writeGlobalProperties();
 
-        void write();
-
-        void setPrecision(label nPrecision)
+        virtual void setPrecision(const label nPrecision)
         {
             globalPropertiesFile_().precision(nPrecision);
             Info << "Output precision: "

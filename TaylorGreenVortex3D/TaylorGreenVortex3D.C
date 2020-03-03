@@ -34,9 +34,30 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::TaylorGreenVortex3D::getNu()
+{
+    // Get molucular viscosity
+    Info << "Get molucular viscosity" << endl;
+
+    const dictionary& transportProperties_ =
+        mesh_.lookupObject<dictionary>("transportProperties");
+
+    nuPtr_.reset(new dimensionedScalar("nu",dimViscosity,transportProperties_));
+
+    nu_ = *nuPtr_;
+    return;
+}
+
+
+// * * * * * * * * * * * * * Public Member Functions  * * * * * * * * * * * //
+
+
 void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
 (
-    volVectorField& UIn, surfaceScalarField& phiIn, volScalarField& pIn
+    volVectorField& UIn,
+    surfaceScalarField& phiIn,
+    volScalarField& pIn
 )
 {
     tmp<volScalarField> x_c = mesh_.C().component(vector::X);
@@ -48,8 +69,10 @@ void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
 
     // pressure field
     {
-        volScalarField pA = sqr(Uinit_)/16 *
-            (cos(2.*x_c.ref()/L_) + cos(2.*y_c.ref()/L_))*(cos(2*z_c.ref()/L_) + 2);
+        volScalarField pA =
+              sqr(Uinit_)/16
+            * (cos(2.*x_c.ref()/L_) + cos(2.*y_c.ref()/L_))
+            * (cos(2*z_c.ref()/L_) + 2);
 
         if(runTime_.startTime().value() == 0)
         {
@@ -85,17 +108,16 @@ void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical
     // Clear tmp fields
     x_c.clear(); y_c.clear(); z_c.clear();
 
+    // Calculate and write global properties
+        // calculate Global Ek and epsilon values
+        calcGlobalProperties();
+
+        // write to log files
+        writeGlobalProperties();
+
     return;
 }
 
-
-void Foam::TaylorGreenVortex3D::setInitialFieldsAsAnalytical()
-{
-    setInitialFieldsAsAnalytical (U_, phi_, p_);
-    U_.write();
-    phi_.write();
-    p_.write();
-}
 
 
 void Foam::TaylorGreenVortex3D::setPropertiesOutput()
@@ -158,20 +180,6 @@ void Foam::TaylorGreenVortex3D::setPropertiesOutput()
     return;
 }
 
-
-void Foam::TaylorGreenVortex3D::getNu()
-{
-    // Get molucular viscosity
-    Info << "Get molucular viscosity" << endl;
-
-    const dictionary& transportProperties_ =
-        mesh_.lookupObject<dictionary>("transportProperties");
-
-    nuPtr_.reset(new dimensionedScalar("nu",dimViscosity,transportProperties_));
-
-    nu_ = *nuPtr_;
-    return;
-}
 
 
 void Foam::TaylorGreenVortex3D::calcGlobalProperties()
@@ -241,7 +249,7 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
     return;
 }
 
-void Foam::TaylorGreenVortex3D::write()
+void Foam::TaylorGreenVortex3D::writeGlobalProperties()
 {
     if(Pstream::parRun() && !(Pstream::master()))
     {
@@ -263,37 +271,18 @@ void Foam::TaylorGreenVortex3D::write()
 }
 
 
-void Foam::TaylorGreenVortex3D::setupProperties()
-{
-    Info << "TaylorGreenVortex3D properties setup:" << endl;
-
-    // Set global properties output file
-    setPropertiesOutput();
-
-    // calculate Global Ek and epsilon values
-    calcGlobalProperties();
-
-    // write to log files
-    write();
-
-    Info << endl;
-
-    return;
-}
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
 (
-    // const volVectorField& U,
-    // const surfaceScalarField& phi,
-    // const volScalarField& p
-
-    volVectorField& U,
-    surfaceScalarField& phi,
-    volScalarField& p
+    const volVectorField& U,
+    const surfaceScalarField& phi,
+    const volScalarField& p
 )
 :
+    // construct base class
+    TaylorGreenVortex (U),
+
     // Set the pointer to runTime
     runTime_(U.time()),
 
@@ -348,10 +337,13 @@ Foam::TaylorGreenVortex3D::TaylorGreenVortex3D
     )
 
 {
-    // Info << "TaylorGreenVortex3D constructor" << endl;
+    // Set global properties output file
+    setPropertiesOutput();
+
+    // get molucular viscosity
     getNu();
 
-    Info << "\tTurbModel type: " << modelType_ << endl;
+    Info << "TurbModel type: " << modelType_ << endl;
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

@@ -40,6 +40,8 @@ SourceFiles
 #include "turbulenceModel.H"
 #include "OFstream.H"
 #include "vector.H"
+
+#include "TaylorGreenVortex.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -51,7 +53,7 @@ namespace Foam
                            Class TaylorGreenVortex2D Declaration
 \*---------------------------------------------------------------------------*/
 
-class TaylorGreenVortex2D
+class TaylorGreenVortex2D : public TaylorGreenVortex
 {
     // Private data
 
@@ -63,19 +65,15 @@ class TaylorGreenVortex2D
 
         // Pointer to solver fields
         //- Extrapolated velocity field pointer
-        // const volVectorField& U_;
-        volVectorField& U_;
+        const volVectorField& U_;
 
         // Extrapolated surface volume flux pointer
-        // const surfaceScalarField& phi_;
-        surfaceScalarField& phi_;
+        const surfaceScalarField& phi_;
 
         // pressure field p pointer
-        // const volScalarField& p_;
-        volScalarField& p_;
+        const volScalarField& p_;
 
-        // const label& pRefCell_;
-        label& pRefCell_;
+        const label& pRefCell_;
 
         const bool pRefOn_;
 
@@ -111,6 +109,11 @@ class TaylorGreenVortex2D
 
     // Private member functions
 
+        void getNu();
+
+        void setAnalyticalFields();
+
+        void calcErrorNorms();
 
 public:
 
@@ -120,15 +123,10 @@ public:
     // Constructors
     TaylorGreenVortex2D
     (
-        // const volVectorField& U,
-        // const surfaceScalarField& phi,
-        // const volScalarField& p,
-        // const label& pRefCell
-
-        volVectorField& U,
-        surfaceScalarField& phi,
-        volScalarField& p,
-        label& pRefCell
+        const volVectorField& U,
+        const surfaceScalarField& phi,
+        const volScalarField& p,
+        const label& pRefCell
     );
 
     // Destructor
@@ -160,30 +158,19 @@ public:
             return Ek_;
         }
 
-        void initializeFields();
-
-        // call-up the initial member functions in case of parent class
-        void setupProperties();
-
-        void setAnalyticalFields();
-
-        void setAnalyticalFields(
-            volVectorField UIn, surfaceScalarField phiIn, volScalarField pIn
+        virtual void setInitialFieldsAsAnalytical(
+            volVectorField& UIn,
+            surfaceScalarField& phiIn,
+            volScalarField& pIn
         );
 
-        void setInitialFieldsAsAnalytical();
+        virtual void setPropertiesOutput();
 
-        void getNu();
+        virtual void calcGlobalProperties();
 
-        void setPropertiesOutput();
+        virtual void writeGlobalProperties();
 
-        void calcGlobalProperties();
-
-        void calcError();
-
-        void write();
-
-        void setPrecision(label nPrecision)
+        virtual void setPrecision(const label nPrecision)
         {
             globalPropertiesFile_().precision(nPrecision);
             Info << "Output precision: "
