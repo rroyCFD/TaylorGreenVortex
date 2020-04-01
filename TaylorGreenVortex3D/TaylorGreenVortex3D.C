@@ -217,8 +217,8 @@ void Foam::TaylorGreenVortex3D::calcGlobalProperties()
         // Hard-coded nut
         const volScalarField& nut = mesh_.lookupObject<volScalarField>("nut");
 
-        Info << "\tmin(nut): " << min(nut).value()
-         << "\tmax(nut) " << max(nut).value() << endl;
+        Info << "\tmin(nut): " << gMin(nut)
+         << "\tmax(nut) " << gMax(nut) << endl;
 
         // turb dissipation from laplacian operation
         tmp<volScalarField> lapTurbDissipRate =
